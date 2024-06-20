@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = 'node'
+        GIT_REPO = 'https://github.com/verma-kunal/AWS-Session.git'
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: "${env.GIT_REPO}"
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build('nodejs-app', '.')
+                }
+            }
+        }
+
+        stage('Run Application') {
+            agent {
+                docker {
+                    image 'nodejs-app:latest'
+                    args '-p 3000:3000'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh 'npm install'
+                sh 'npm start &'
+                // Wait to make sure the app starts
+                sleep 10
+                sh 'curl -f http://localhost:3000'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up
+            script {
+                dockerImage.inside {
+                    sh 'docker ps -q --filter "ancestor=nodejs-app" | xargs -r docker stop'
+                    sh 'docker ps -a -q --filter "ancestor=nodejs-app" | xargs -r docker rm'
+                }
+            }
+        }
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
+}
