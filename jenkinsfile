@@ -31,7 +31,7 @@ pipeline {
             }
             steps {
                 sh 'npm install'
-                sh 'npm start &'
+                sh 'npm run start'
                 // Wait to make sure the app starts
                 sleep 10
                 sh 'curl -f http://localhost:3000'
