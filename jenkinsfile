@@ -1,8 +1,13 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:18-alpine'  // Use the official Node.js image
+            args '-p 3000:3000'    // Expose port 3000
+            reuseNode true
+        }
+    }
 
     environment {
-        DOCKER_IMAGE = 'node'
         GIT_REPO = 'https://github.com/verma-kunal/AWS-Session.git'
     }
 
@@ -22,14 +27,6 @@ pipeline {
         }
 
         stage('Run Application') {
-            agent {
-                docker {
-                    image 'nodejs-app:latest'
-                    args '-p 3000:3000'
-                    reuseNode true
-                    user 'root:root' // Run as root user inside the container
-                }
-            }
             steps {
                 sh 'npm install'
                 sh 'npm start &'
