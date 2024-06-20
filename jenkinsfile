@@ -37,21 +37,4 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            // Clean up
-            script {
-                sh '''
-                    docker ps -q --filter "ancestor=nodejs-app" | xargs -r docker stop
-                    docker ps -a -q --filter "ancestor=nodejs-app" | xargs -r docker rm
-                '''
-            }
-        }
-        success {
-            echo 'Pipeline completed successfully.'
-        }
-        failure {
-            echo 'Pipeline failed.'
-        }
-    }
-}
+   
