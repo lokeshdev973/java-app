@@ -3,7 +3,6 @@ pipeline {
         docker {
             image 'node:18-alpine'  // Use the official Node.js image
             args '-p 3000:3000'    // Expose port 3000
-            reuseNode true
         }
     }
 
@@ -37,4 +36,21 @@ pipeline {
         }
     }
 
-   
+    post {
+        always {
+            // Clean up
+            script {
+                sh '''
+                    docker ps -q --filter "ancestor=nodejs-app" | xargs -r docker stop
+                    docker ps -a -q --filter "ancestor=nodejs-app" | xargs -r docker rm
+                '''
+            }
+        }
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
+}
