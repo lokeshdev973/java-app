@@ -27,6 +27,7 @@ pipeline {
                     image 'nodejs-app:latest'
                     args '-p 3000:3000'
                     reuseNode true
+                    user 'root:root' // Run as root user inside the container
                 }
             }
             steps {
@@ -43,10 +44,10 @@ pipeline {
         always {
             // Clean up
             script {
-                dockerImage.inside {
-                    sh 'docker ps -q --filter "ancestor=nodejs-app" | xargs -r docker stop'
-                    sh 'docker ps -a -q --filter "ancestor=nodejs-app" | xargs -r docker rm'
-                }
+                sh '''
+                    docker ps -q --filter "ancestor=nodejs-app" | xargs -r docker stop
+                    docker ps -a -q --filter "ancestor=nodejs-app" | xargs -r docker rm
+                '''
             }
         }
         success {
