@@ -1,32 +1,15 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18-alpine'  // Use the official Node.js image
-            args '-p 3000:3000 -v /var/run/docker.sock:/var/run/docker.sock'    // Expose port 3000 and mount Docker socket
-        }
-    }
+    agent any
 
     environment {
+        DOCKER_IMAGE = 'node'
         GIT_REPO = 'https://github.com/verma-kunal/AWS-Session.git'
     }
 
     stages {
-        stage('Verify Docker Installation') {
-            steps {
-                sh 'docker --version'
-            }
-        }
-
         stage('Clone Repository') {
             steps {
                 git branch: 'main', url: "${env.GIT_REPO}"
-            }
-        }
-
-        stage('Check Docker in Container') {
-            steps {
-                sh 'echo "Checking Docker availability in the container"'
-                sh 'docker --version'
             }
         }
 
@@ -39,6 +22,13 @@ pipeline {
         }
 
         stage('Run Application') {
+            agent {
+                docker {
+                    image 'nodejs-app:latest'
+                    args '-p 3000:3000'
+                    reuseNode true
+                }
+            }
             steps {
                 sh 'npm install'
                 sh 'npm start &'
@@ -53,10 +43,10 @@ pipeline {
         always {
             // Clean up
             script {
-                sh '''
-                    docker ps -q --filter "ancestor=nodejs-app" | xargs -r docker stop
-                    docker ps -a -q --filter "ancestor=nodejs-app" | xargs -r docker rm
-                '''
+                dockerImage.inside {
+                    sh 'docker ps -q --filter "ancestor=nodejs-app" | xargs -r docker stop'
+                    sh 'docker ps -a -q --filter "ancestor=nodejs-app" | xargs -r docker rm'
+                }
             }
         }
         success {
